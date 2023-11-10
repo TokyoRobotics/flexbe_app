@@ -57,18 +57,33 @@ window.onload = function() {
     const args = getCommandLineArguments();
     if ("behavior" in args) {
         behaviorName = args["behavior"]
+        console.log(`== Loading initial behavior: ${behaviorName} ==`)
 
         let retry = 0;
+        let behaviorListSize = 0;
         function loadInitialBehavior() {
-            try {
-                var manifest = WS.Behaviorlib.getByName(behaviorName).getBehaviorManifest();
-                IO.BehaviorLoader.loadBehavior(manifest);
-            } catch (e) {
-                if (retry < 10) {
-                    setTimeout(loadInitialBehavior, 500);
-                    retry++;
+
+            // wait for completed loading of behavior list
+            const behaviorList = WS.Behaviorlib.getBehaviorList()
+            if (behaviorListSize > 0 && behaviorListSize == behaviorList.length) {
+                try {
+                    var manifest = WS.Behaviorlib.getByName(behaviorName).getBehaviorManifest();
+                    IO.BehaviorLoader.loadBehavior(manifest);
+                    console.log(`== Loaded initial behavior: ${behaviorName} ==`)
+                } catch (e) {
+                    console.log(`Failed to load initial behavior '${behaviorName}': ${e}`)
                 }
+                return;
             }
+
+            if (retry >= 50) {
+                console.log(`Timeout: Failed to load initial behavior '${behaviorName}'`)
+                return;
+            }
+
+            behaviorListSize = behaviorList.length;
+            retry++;
+            setTimeout(loadInitialBehavior, 500);
         }
         setTimeout(loadInitialBehavior, 100);
     }
