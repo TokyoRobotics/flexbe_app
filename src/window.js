@@ -37,4 +37,40 @@ window.onload = function() {
 			CheckBehaviorsReport.checkAllBehaviors(gui.App.quit);
 		}, 5 * 1000);
 	}
+
+    //-----------------------------------------------------------------
+    // load behavior from command line argument (by Takashi Sato 2023/11/10)
+    function getCommandLineArguments() {
+        let args = {};
+        argv = gui.App.argv.toString()
+        argv.split(',').forEach((val, index) => {
+            // "--key=value" 形式の引数を解析
+            if (val.startsWith('--')) {
+                let [key, value] = val.slice(2).split('=');
+                args[key] = value;
+                console.log(`key: ${key}, value: ${value}`)
+            }
+        });
+        return args;
+    }
+
+    const args = getCommandLineArguments();
+    if ("behavior" in args) {
+        behaviorName = args["behavior"]
+
+        let retry = 0;
+        function loadInitialBehavior() {
+            try {
+                var manifest = WS.Behaviorlib.getByName(behaviorName).getBehaviorManifest();
+                IO.BehaviorLoader.loadBehavior(manifest);
+            } catch (e) {
+                if (retry < 10) {
+                    setTimeout(loadInitialBehavior, 500);
+                    retry++;
+                }
+            }
+        }
+        setTimeout(loadInitialBehavior, 100);
+    }
+    //-----------------------------------------------------------------
 }
