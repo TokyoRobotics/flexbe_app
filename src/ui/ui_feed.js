@@ -43,16 +43,17 @@ UI.Feed = new (function() {
 		latest_version = parseInt(latest_version[0]) * 1000 * 1000 + parseInt(latest_version[1]) * 1000 + parseInt(latest_version[2]);
 
 		if (current_version < latest_version) {
-			displayPredefinedMessage("msg_notify_update");
-			status_element.setAttribute("src", "img/version_old.png");
-			status_element.setAttribute("title", "New release available!");
-			console.log("Version: " + current_version_label + " (old), Release: " + latest_version_label);
+            // disable update notification (by Takashi Sato 2023/11/10)
+			// displayPredefinedMessage("msg_notify_update");
+			// status_element.setAttribute("src", "img/version_old.png");
+			// status_element.setAttribute("title", "New release available!");
+			// console.log("Version: " + current_version_label + " (old), Release: " + latest_version_label);
 
 		} else if (current_version > latest_version) {
 			status_element.setAttribute("src", "img/version_devel.png");
 			status_element.setAttribute("title", "Pre-release development version");
 			console.log("Version: " + current_version_label + " (devel), Release: " + latest_version_label);
-		
+
 		} else {
 			status_element.setAttribute("src", "img/version_latest.png");
 			status_element.setAttribute("title", "Running latest release");
