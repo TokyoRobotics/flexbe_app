@@ -31,7 +31,7 @@ UI.Menu = new (function() {
 		],
 		[
 			["Check Behavior", "check", function() { UI.Menu.checkBehaviorClicked(); }],
-			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
+			["Kill Onboard Engine", "cross", function() { UI.Menu.killOnboardEngineClicked(); }]
 		]
 	];
 	var button_config_sm = [
@@ -63,13 +63,13 @@ UI.Menu = new (function() {
 	var button_config_rc = [
 		[
 			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined],
-			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
+			["Kill Onboard Engine", "cross", function() { UI.Menu.killOnboardEngineClicked(); }]
 		]
 	];
 	var button_config_se = [
 		[
 			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined],
-			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
+			["Kill Onboard Engine", "cross", function() { UI.Menu.killOnboardEngineClicked(); }]
 		],
 		[
 			["Import Configuration", "settings_import", function() { UI.Settings.importConfiguration(); }],
@@ -286,7 +286,7 @@ UI.Menu = new (function() {
 		UI.Panels.Terminal.show();
 	}
 
-	this.killBehaviorClicked = function() {
+	this.killOnboardEngineClicked = function() {
 		try {
 			var rosnodeList = spawn("rosnode", ["list"]);
 
@@ -325,6 +325,7 @@ UI.Menu = new (function() {
 				rosnodeKill.on('close', () => {
 					T.logInfo(`killed behavior node: ${behaviorNodeName}`);
 					UI.Panels.Terminal.hide();
+					UI.RuntimeControl.displayBehaviorFeedback(3, "Onboard engine killed.");
 				})
 			});
 		} catch (err) {
