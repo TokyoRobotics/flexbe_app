@@ -30,7 +30,8 @@ UI.Menu = new (function() {
 			["Edit Code", "page_edit", function() { UI.Menu.scEditClicked(); }, "ctrl+e"]
 		],
 		[
-			["Check Behavior", "check", function() { UI.Menu.checkBehaviorClicked(); }]
+			["Check Behavior", "check", function() { UI.Menu.checkBehaviorClicked(); }],
+			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
 		]
 	];
 	var button_config_sm = [
@@ -61,12 +62,14 @@ UI.Menu = new (function() {
 	];
 	var button_config_rc = [
 		[
-			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined]
+			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined],
+			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
 		]
 	];
 	var button_config_se = [
 		[
-			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined]
+			["Show Terminal", "title_terminal", function() { UI.Menu.terminalClicked(); }, undefined],
+			["Kill Behavior", "cross", function() { UI.Menu.killBehaviorClicked(); }]
 		],
 		[
 			["Import Configuration", "settings_import", function() { UI.Settings.importConfiguration(); }],
@@ -89,7 +92,7 @@ UI.Menu = new (function() {
 				td = document.createElement("td");
 				td.setAttribute("class", "tool_button");
 				td.setAttribute("id", "tool_button " + button[0]);
-				td.innerHTML = 
+				td.innerHTML =
 					'<table cellpadding="0" cellspacing="0"><tr><td valign="middle">' +
 						'<img src="img/' + button[1] + '.png" />' +
 					'</td><td valign="middle" style="padding-left:5px">' +
@@ -283,6 +286,52 @@ UI.Menu = new (function() {
 		UI.Panels.Terminal.show();
 	}
 
+	this.killBehaviorClicked = function() {
+		try {
+			var rosnodeList = spawn("rosnode", ["list"]);
+
+			let nodeList = ''
+			rosnodeList.stdout.on('data', (data) => {
+				nodeList += data.toString();
+			});
+			rosnodeList.stderr.on('data', (data) => {
+				T.logWarn(data);
+				return;
+			});
+			rosnodeList.on('close', () => {
+				// 出力を行に分割
+				const lines = nodeList.split('\n');
+
+				// bahaviorで終わるノード名を抽出
+				const filteredLines = lines.filter(line => line.endsWith('/behavior'));
+				if (filteredLines.length == 0) {
+					T.logWarn("behavior node is not found");
+					return;
+				}
+				if (filteredLines.length != 1) {
+					T.logWarn("behavior node is not unique");
+					return;
+				}
+
+				const behaviorNodeName = filteredLines[0];
+				T.show();
+				T.logInfo(`killing behavior node: ${behaviorNodeName}`);
+
+				// behaviorノードをkill
+				var rosnodeKill = spawn("rosnode", ["kill", behaviorNodeName]);
+				rosnodeKill.stderr.on('data', (data) => {
+					T.logWarn(data);
+				});
+				rosnodeKill.on('close', () => {
+					T.logInfo(`killed behavior node: ${behaviorNodeName}`);
+					UI.Panels.Terminal.hide();
+				})
+			});
+		} catch (err) {
+			T.logError("failed to kill behavior node");
+		}
+	}
+
 	this.saveBehaviorClicked = function() {
 		var check_error_string = undefined;
 		if (Behavior.isReadonly()) {
@@ -325,7 +374,7 @@ UI.Menu = new (function() {
 
 	this.loadBehaviorClicked = function() {
 		if (RC.Controller.isReadonly()) return;
-		
+
 		UI.Panels.SelectBehavior.setSelectionCallback(function(manifest) {
 			IO.BehaviorLoader.loadBehavior(manifest);
 		});
